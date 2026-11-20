@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CanteenConnect</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial;background:#fff8f0;color:#49352c}
+header{background:#c66a32;color:white;padding:28px}
+main{max-width:850px;margin:auto;padding:20px}.card{background:white;padding:22px;border-radius:15px;margin:20px 0;box-shadow:0 3px 12px #0001}
+input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:9px}
+button{background:#c66a32;color:white;border:0;cursor:pointer}
+.item{padding:15px;border-bottom:1px solid #eee}.actions{display:flex;gap:8px}.actions button{width:auto}
+</style></head>
+<body>
+<header><h1>🍔 CanteenConnect</h1><p>Your campus food ordering manager.</p></header>
+<main>
+<div class="card"><h2>Place Food Order</h2>
+<input id="student" placeholder="Student name">
+<select id="food"><option value="50">Chicken Rice - ₱50</option><option value="35">Sandwich - ₱35</option><option value="25">Burger - ₱25</option><option value="20">Juice - ₱20</option><option value="15">Water - ₱15</option></select>
+<input id="qty" type="number" min="1" value="1" placeholder="Quantity">
+<button id="add">Place Order</button></div>
+<div class="card"><h2>Food Orders</h2><input id="search" placeholder="Search orders..."><div id="list"></div></div>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),key='canteen27';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let data=[];try{data=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(data))data=[]}catch{}
+function save(){localStorage.setItem(key,JSON.stringify(data));render()}
+function add(){
+let n=$('student').value.trim(),q=Number($('qty').value),f=$('food'),p=Number(f.value);
+if(!n||!Number.isInteger(q)||q<1||q>100)return alert('Enter a valid name and quantity.');
+data.unshift({id:Date.now().toString()+Math.random(),n,food:f.options[f.selectedIndex].text,q,p,status:'Pending'});
+$('student').value='';$('qty').value=1;save();
+}
+function edit(id){
+let x=data.find(a=>a.id===id);if(!x)return;
+let q=Number(prompt('Quantity:',x.q));if(!Number.isInteger(q)||q<1)return alert('Invalid quantity.');
+let s=prompt('Status: Pending, Preparing, Ready, Completed',x.status);
+if(!['Pending','Preparing','Ready','Completed'].includes(s))return alert('Invalid status.');
+x.q=q;x.status=s;save();
+}
+function del(id){if(confirm('Delete order?')){data=data.filter(x=>x.id!==id);save()}}
+function render(){
+let q=$('search').value.toLowerCase();
+$('list').innerHTML=data.filter(x=>(x.n+x.food).toLowerCase().includes(q)).map(x=>`
+<div class="item"><h3>🍽️ ${esc(x.food)}</h3><p>Student: ${esc(x.n)}</p>
+<p>Quantity: ${x.q} | Total: ₱${(x.q*x.p).toFixed(2)}</p><b>${esc(x.status)}</b>
+<div class="actions"><button data-edit="${x.id}">Edit</button><button data-del="${x.id}">Delete</button></div></div>`).join('')||'No orders yet.'}
+$('add').addEventListener('click',add);$('search').addEventListener('input',render);
+$('list').addEventListener('click',e=>{if(e.target.dataset.edit)edit(e.target.dataset.edit);if(e.target.dataset.del)del(e.target.dataset.del)});
+render();
+})();
+</script></body></html>
